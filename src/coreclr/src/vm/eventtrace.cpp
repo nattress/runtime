@@ -22,6 +22,7 @@
 #include "gcrhenv.h"
 #define Win32EventWrite PalEtwEventWrite
 #define InterlockedExchange64 PalInterlockedExchange64
+#define InterlockedExchangeAdd PalInterlockedExchangeAdd
 
 #else // !FEATURE_REDHAWK
 
@@ -1724,7 +1725,7 @@ void BulkTypeEventLogger::FireBulkTypeEvent()
 //      Index into array of where this type got batched. -1 if there was a failure.
 //
 
-int BulkTypeEventLogger::LogSingleType(TypeHandle th)
+int BulkTypeEventLogger::LogSingleType(TypeHandle th, LONG correlationHandle)
 {
     CONTRACTL
     {
@@ -1773,6 +1774,7 @@ int BulkTypeEventLogger::LogSingleType(TypeHandle th)
     pVal->fixedSizedData.TypeNameID = (th.GetMethodTable() == NULL) ? 0 : th.GetCl();
     pVal->fixedSizedData.Flags = 0;
     pVal->fixedSizedData.CorElementType = (BYTE) th.GetInternalCorElementType();
+    pVal->fixedSizedData.CorrelationHandle = correlationHandle;
 
     if (th.IsArray())
     {
@@ -1871,7 +1873,7 @@ int BulkTypeEventLogger::LogSingleType(TypeHandle th)
         {
             pVal->fixedSizedData.Flags |= kEtwTypeFlagsFinalizable;
         }
-        if (pMT->IsDelegate())
+        if (g_pMulticastDelegateClass != nullptr && pMT->IsDelegate())
         {
             pVal->fixedSizedData.Flags |= kEtwTypeFlagsDelegate;
         }
@@ -1929,7 +1931,7 @@ int BulkTypeEventLogger::LogSingleType(TypeHandle th)
         // batched into an event on its own, this recursive call will not try to
         // call itself again.
         FireBulkTypeEvent();
-        return LogSingleType(th);
+        return LogSingleType(th, correlationHandle);
     }
 
     // The type fits into the batch, so update our state
@@ -1952,7 +1954,7 @@ int BulkTypeEventLogger::LogSingleType(TypeHandle th)
 //          we even care to check if the type was already logged
 //
 
-void BulkTypeEventLogger::LogTypeAndParameters(ULONGLONG thAsAddr, ETW::TypeSystemLog::TypeLogBehavior typeLogBehavior)
+void BulkTypeEventLogger::LogTypeAndParameters(ULONGLONG thAsAddr, ETW::TypeSystemLog::TypeLogBehavior typeLogBehavior, LONG correlationHandle)
 {
     CONTRACTL
     {
@@ -1967,7 +1969,7 @@ void BulkTypeEventLogger::LogTypeAndParameters(ULONGLONG thAsAddr, ETW::TypeSyst
 
     // Batch up this type.  This grabs useful info about the type, including any
     // type parameters it may have, and sticks it in m_rgBulkTypeValues
-    int iBulkTypeEventData = LogSingleType(th);
+    int iBulkTypeEventData = LogSingleType(th, correlationHandle);
     if (iBulkTypeEventData == -1)
     {
         // There was a failure trying to log the type, so don't bother with its type
@@ -2786,6 +2788,7 @@ BOOL ETW::TypeSystemLog::s_fHeapAllocEventEnabledOnStartup = FALSE;
 BOOL ETW::TypeSystemLog::s_fHeapAllocHighEventEnabledNow = FALSE;
 BOOL ETW::TypeSystemLog::s_fHeapAllocLowEventEnabledNow = FALSE;
 int ETW::TypeSystemLog::s_nCustomMsBetweenEvents = 0;
+Volatile<LONG> ETW::TypeSystemLog::s_nNextCorrelationHandle = 0;
 
 
 //---------------------------------------------------------------------------------------
@@ -3190,7 +3193,7 @@ CrstBase * ETW::TypeSystemLog::GetHashCrst()
 //
 
 // static
-VOID ETW::TypeSystemLog::LogTypeAndParametersIfNecessary(BulkTypeEventLogger * pLogger, ULONGLONG thAsAddr, TypeLogBehavior typeLogBehavior)
+VOID ETW::TypeSystemLog::LogTypeAndParametersIfNecessary(BulkTypeEventLogger * pLogger, ULONGLONG thAsAddr, TypeLogBehavior typeLogBehavior, LONG correlationHandle)
 {
     CONTRACTL
     {
@@ -3235,7 +3238,7 @@ VOID ETW::TypeSystemLog::LogTypeAndParametersIfNecessary(BulkTypeEventLogger * p
         // on the stack.  If there are generic parameters that need to be logged, then
         // at least they'll get batched together with the type
         BulkTypeEventLogger logger;
-        logger.LogTypeAndParameters(thAsAddr, typeLogBehavior);
+        logger.LogTypeAndParameters(thAsAddr, typeLogBehavior, correlationHandle);
 
         // Since this logger isn't being used to batch anything else, flush what we have
         logger.FireBulkTypeEvent();
@@ -3244,7 +3247,7 @@ VOID ETW::TypeSystemLog::LogTypeAndParametersIfNecessary(BulkTypeEventLogger * p
     {
         // We are batching this type with others (e.g., we're being called at the end of
         // a GC on a heap walk).  So use the logger our caller set up for us.
-        pLogger->LogTypeAndParameters(thAsAddr, typeLogBehavior);
+        pLogger->LogTypeAndParameters(thAsAddr, typeLogBehavior, correlationHandle);
     }
 }
 
@@ -3745,6 +3748,59 @@ VOID ETW::TypeSystemLog::FlushObjectAllocationEvents()
             }
         }
     }
+}
+
+//---------------------------------------------------------------------------------------
+//
+// Called when a type load starts to establish a unique handle for the type load across
+// several load phases and the final bulk type event.
+//
+
+// static
+LONG ETW::TypeSystemLog::GetNextTypeLoadCorrelationHandle()
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_TRIGGERS;
+        MODE_ANY;
+        CAN_TAKE_LOCK;
+    }
+    CONTRACTL_END;
+
+    return InterlockedExchangeAdd(&s_nNextCorrelationHandle, 1);
+}
+
+
+// static
+VOID ETW::TypeSystemLog::TypeLoadStarted(LONG correlationHandle)
+{
+    // TODO: Contract
+
+    // If allocation sampling is enabled, bail here so that we don't delete
+    // any of the thread local state.
+    if (ETW_TRACING_CATEGORY_ENABLED(
+        MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_DOTNET_Context,
+        TRACE_LEVEL_INFORMATION,
+        CLR_TYPE_KEYWORD))
+    {
+        FireEtwTypeLoadStart(correlationHandle, GetClrInstanceId());
+    }
+}
+
+// static
+VOID ETW::TypeSystemLog::TypeLoadFinished(LONG correlationHandle, ULONGLONG thAsAddr)
+{
+    // TODO: Contract
+
+    if (ETW_TRACING_CATEGORY_ENABLED(
+        MICROSOFT_WINDOWS_DOTNETRUNTIME_PROVIDER_DOTNET_Context,
+        TRACE_LEVEL_INFORMATION,
+        CLR_TYPE_KEYWORD))
+    {
+        ETW::TypeSystemLog::LogTypeAndParametersIfNecessary(nullptr, thAsAddr, ETW::TypeSystemLog::kTypeLogBehaviorTakeLockAndLogIfFirstTime, correlationHandle);
+    }
+    
 }
 
 //---------------------------------------------------------------------------------------

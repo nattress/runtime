@@ -335,6 +335,7 @@
                           message="$(string.RuntimePublisher.TypeTaskMessage)">
                       <opcodes>
                         <opcode name="BulkType" message="$(string.RuntimePublisher.BulkTypeOpcodeMessage)" symbol="CLR_BULKTYPE_OPCODE" value="10"> </opcode>
+                        <opcode name="TypeLoadStart" message="$(string.RuntimePublisher.TypeLoadStartOpcodeMessage)" symbol="CLR_TYPELOADSTART_OPCODE" value="11"> </opcode>
                       </opcodes>
                     </task>
                     <task name="ThreadPoolWorkingThreadCount" symbol="CLR_THREADPOOLWORKINGTHREADCOUNT_TASK"
@@ -2331,12 +2332,24 @@
                         <data name="Name" inType="win:UnicodeString" />
                         <data name="TypeParameterCount" inType="win:UInt32" />
                         <data name="TypeParameters"  count="TypeParameterCount"  inType="win:UInt64" outType="win:HexInt64" />
+                        <data name="CorrelationHandle" inType="win:UInt32" />
                       </struct>
                       <UserData>
                         <Type xmlns="myNs">
                           <Count> %1 </Count>
                           <ClrInstanceID> %2 </ClrInstanceID>
                         </Type>
+                      </UserData>
+                    </template>
+
+                    <template tid="TypeLoadStart">
+                      <data name="CorrelationHandle" inType="win:UInt32" />
+                      <data name="ClrInstanceID" inType="win:UInt16" />
+                      <UserData>
+                        <TypeLoadStart xmlns="myNs">
+                          <CorrelationHandle> %1 </CorrelationHandle>
+                          <ClrInstanceID> %2 </ClrInstanceID>
+                        </TypeLoadStart>
                       </UserData>
                     </template>
 
@@ -2774,7 +2787,7 @@
                            task="GarbageCollection"
                            symbol="GCFinalizersBegin_V1" message="$(string.RuntimePublisher.GCFinalizersBegin_V1EventMessage)"/>
 
-                    <event value="15" version="0" level="win:Informational"  template="BulkType"
+                    <event value="15" version="1" level="win:Informational"  template="BulkType"
                            keywords ="TypeKeyword"  opcode="BulkType"
                            task="Type"
                            symbol="BulkType" message="$(string.RuntimePublisher.BulkTypeEventMessage)"/>
@@ -3067,6 +3080,13 @@
                            opcode="MethodDetails"
                            symbol="MethodDetails"
                            message="$(string.RuntimePublisher.MethodDetailsEventMessage)"/>
+
+                    <event value="73" version="0" level="win:Informational"  template="TypeLoadStart"
+                           keywords="TypeKeyword"
+                           opcode="TypeLoadStart"
+                           task="Type"
+                           symbol="TypeLoadStart"
+                           message="$(string.RuntimePublisher.TypeLoadStartEventMessage)"/>
 
                     <!-- CLR Exception events -->
                     <event value="80" version="0" level="win:Informational"
@@ -6664,6 +6684,7 @@
                 <string id="RuntimePublisher.GCFinalizersBeginEventMessage" value="NONE" />
                 <string id="RuntimePublisher.GCFinalizersBegin_V1EventMessage" value="ClrInstanceID=%1" />
                 <string id="RuntimePublisher.BulkTypeEventMessage" value="Count=%1;%nClrInstanceID=%2" />
+                <string id="RuntimePublisher.TypeLoadStartEventMessage" value="CorrelationHandle=%1;%nClrInstanceID=%2" />
                 <string id="RuntimePublisher.GCBulkRootEdgeEventMessage" value="ClrInstanceID=%1;%nIndex=%2;%nCount=%3" />
                 <string id="RuntimePublisher.GCBulkRootCCWEventMessage" value="ClrInstanceID=%1;%nIndex=%2;%nCount=%3" />
                 <string id="RuntimePublisher.GCBulkRCWEventMessage" value="ClrInstanceID=%1;%nIndex=%2;%nCount=%3" />
@@ -7337,6 +7358,7 @@
                 <string id="RuntimePublisher.GCGlobalHeapHistoryOpcodeMessage" value="GlobalHeapHistory" />
                 <string id="RuntimePublisher.FinalizeObjectOpcodeMessage" value="FinalizeObject" />
                 <string id="RuntimePublisher.BulkTypeOpcodeMessage" value="BulkType" />
+                <string id="RuntimePublisher.TypeLoadStartOpcodeMessage" value="TypeLoadStart" />
                 <string id="RuntimePublisher.MethodDetailsOpcodeMessage" value="MethodDetails" />
                 <string id="RuntimePublisher.MethodLoadOpcodeMessage" value="Load" />
                 <string id="RuntimePublisher.MethodUnloadOpcodeMessage" value="Unload" />

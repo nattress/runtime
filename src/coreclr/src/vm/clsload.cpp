@@ -2644,6 +2644,7 @@ TypeHandle ClassLoader::LoadTypeDefOrRefThrowing(Module *pModule,
         }
     }
 
+    LONG loadHandle = 0;
     if (!typeHnd.IsNull() && existingLoadLevel >= level)
     {
         // perform the check that it's not an uninstantiated TypeDef/TypeRef
@@ -2655,6 +2656,13 @@ TypeHandle ClassLoader::LoadTypeDefOrRefThrowing(Module *pModule,
     }
     else
     {
+        // Start Type Load Event
+        // Fire an ETW event to mark the end of JIT'ing
+#ifndef DACCESS_COMPILE
+        loadHandle = ETW::TypeSystemLog::GetNextTypeLoadCorrelationHandle();
+        ETW::TypeSystemLog::TypeLoadStarted(loadHandle);
+#endif
+
         // otherwise try to resolve the TypeRef and/or load the corresponding TypeDef
         IMDInternalImport *pInternalImport = pModule->GetMDImport();
         mdToken tokType = TypeFromToken(typeDefOrRef);
@@ -2759,6 +2767,12 @@ TypeHandle ClassLoader::LoadTypeDefOrRefThrowing(Module *pModule,
         DacNotImpl();
 #endif
     }
+
+    // Fire type loaded event
+#ifndef DACCESS_COMPILE
+    ULONGLONG th = (ULONGLONG)thRes.AsTAddr();
+    ETW::TypeSystemLog::TypeLoadFinished(loadHandle, th);
+#endif
 
     RETURN(thRes);
 }

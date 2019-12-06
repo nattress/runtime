@@ -99,6 +99,7 @@ struct EventStructBulkTypeFixedSizedData
     ULONG TypeNameID;
     ULONG Flags;
     BYTE CorElementType;
+    LONG CorrelationHandle;
 };
 
 struct EventStaticEntry
@@ -300,9 +301,9 @@ private:
     BYTE *m_pBulkTypeEventBuffer;
 
 #ifdef FEATURE_REDHAWK
-    int LogSingleType(EEType * pEEType);
+    int LogSingleType(EEType * pEEType, LONG correlationHandle);
 #else
-    int LogSingleType(TypeHandle th);
+    int LogSingleType(TypeHandle th, LONG correlationHandle);
 #endif
 
 public:
@@ -336,7 +337,7 @@ public:
         m_pBulkTypeEventBuffer = NULL;
     }
 
-    void LogTypeAndParameters(ULONGLONG thAsAddr, ETW::TypeSystemLog::TypeLogBehavior typeLogBehavior);
+    void LogTypeAndParameters(ULONGLONG thAsAddr, ETW::TypeSystemLog::TypeLogBehavior typeLogBehavior, LONG correlationHandle = 0);
     void FireBulkTypeEvent();
 };
 

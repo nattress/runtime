@@ -141,6 +141,10 @@ namespace ETW
         // GCSampledObjectAllocation*Keyword was used)
         static int s_nCustomMsBetweenEvents;
 
+        // Each type load is assigned a handle unique to the process and used to bookend the
+        // initial load and final BulkType event
+        static Volatile<LONG> s_nNextCorrelationHandle;
+
     public:
         // This customizes the type logging behavior in LogTypeAndParametersIfNecessary
         enum TypeLogBehavior
@@ -162,17 +166,21 @@ namespace ETW
             kTypeLogBehaviorAlwaysLogTopLevelType,
         };
 
+#ifdef FEATURE_EVENT_TRACE
         static HRESULT PreRegistrationInit();
         static void PostRegistrationInit();
         static BOOL IsHeapAllocEventEnabled();
         static void SendObjectAllocatedEvent(Object * pObject);
         static CrstBase * GetHashCrst();
-        static VOID LogTypeAndParametersIfNecessary(BulkTypeEventLogger * pBulkTypeEventLogger, ULONGLONG thAsAddr, TypeLogBehavior typeLogBehavior);
+        static VOID LogTypeAndParametersIfNecessary(BulkTypeEventLogger * pBulkTypeEventLogger, ULONGLONG thAsAddr, TypeLogBehavior typeLogBehavior, LONG correlationHandle = 0);
         static VOID OnModuleUnload(Module * pModule);
         static void OnKeywordsChanged();
         static void Cleanup();
         static VOID DeleteTypeHashNoLock(AllLoggedTypes **ppAllLoggedTypes);
         static VOID FlushObjectAllocationEvents();
+        static LONG GetNextTypeLoadCorrelationHandle();
+        static VOID TypeLoadStarted(LONG correlationHandle);
+        static VOID TypeLoadFinished(LONG correlationHandle, ULONGLONG thAsAddr);
 
     private:
         static BOOL ShouldLogType(TypeHandle th);
@@ -181,6 +189,11 @@ namespace ETW
         static BOOL AddOrReplaceTypeLoggingInfo(ETW::LoggedTypesFromModule * pLoggedTypesFromModule, const ETW::TypeLoggingInfo * pTypeLoggingInfo);
         static int GetDefaultMsBetweenEvents();
         static VOID OnTypesKeywordTurnedOff();
+#else
+        static LONG GetNextTypeLoadCorrelationHandle() { return 0; }
+        static VOID TypeLoadStarted(LONG correlationHandle) {}
+        static VOID TypeLoadFinished(LONG correlationHandle, ULONGLONG thAsAddr) {}
+#endif
     };
 
 #endif // FEATURE_REDHAWK
