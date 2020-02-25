@@ -21,5 +21,6 @@
 #define NGENWORKER_FLAGS_SILENT                  0x8000
 #define NGENWORKER_FLAGS_VERBOSE                0x10000
 #define NGENWORKER_FLAGS_SUPPRESS_WARNINGS      0x20000
+#define NGENWORKER_FLAGS_DEBUG                  0x40000
 
 #endif // _NGENCOMMON_H_

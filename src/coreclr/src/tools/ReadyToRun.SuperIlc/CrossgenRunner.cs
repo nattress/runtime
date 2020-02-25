@@ -55,6 +55,11 @@ namespace ReadyToRun.SuperIlc
             yield return "/out";
             yield return outputFileName;
 
+            if (!_options.Release)
+            {
+                yield return "/debug";
+            }
+
             if (_options.LargeBubble && Path.GetFileNameWithoutExtension(assemblyFileNames.First()) != "System.Private.CoreLib")
             {
                 // There seems to be a bug in Crossgen on Linux we don't intend to fix -

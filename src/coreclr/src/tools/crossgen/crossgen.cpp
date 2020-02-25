@@ -517,6 +517,10 @@ int _cdecl wmain(int argc, __in_ecount(argc) WCHAR **argv)
         {
             dwFlags |= NGENWORKER_FLAGS_MISSINGDEPENDENCIESOK;
         }
+        else if (MatchParameter(*argv, W("debug")))
+        {
+            dwFlags |= NGENWORKER_FLAGS_DEBUG;
+        }
 #if !defined(FEATURE_MERGE_JIT_AND_ENGINE)
         else if (MatchParameter(*argv, W("JITPath")) && (argc > 1))
         {

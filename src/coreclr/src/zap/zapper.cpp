@@ -46,7 +46,7 @@ STDAPI NGenWorker(LPCWSTR pwzFilename, DWORD dwFlags, LPCWSTR pwzPlatformAssembl
 
         // V1
 
-        ngo.fDebug = false;
+        ngo.fDebug = (dwFlags & NGENWORKER_FLAGS_DEBUG) != 0;
         ngo.fDebugOpt = false;
         ngo.fProf = false;
         ngo.fSilent = (dwFlags & NGENWORKER_FLAGS_SILENT) != 0;
@@ -1129,8 +1129,6 @@ IMetaDataAssemblyEmit * Zapper::CreateAssemblyEmitter()
 
 void Zapper::InitializeCompilerFlags(CORCOMPILE_VERSION_INFO * pVersionInfo)
 {
-    m_pOpt->m_compilerFlags.Clear(CORJIT_FLAGS::CORJIT_FLAG_DEBUG_INFO);
-    m_pOpt->m_compilerFlags.Clear(CORJIT_FLAGS::CORJIT_FLAG_DEBUG_CODE);
     m_pOpt->m_compilerFlags.Clear(CORJIT_FLAGS::CORJIT_FLAG_PROF_ENTERLEAVE);
     m_pOpt->m_compilerFlags.Clear(CORJIT_FLAGS::CORJIT_FLAG_PROF_NO_PINVOKE_INLINE);
 
@@ -1139,7 +1137,6 @@ void Zapper::InitializeCompilerFlags(CORCOMPILE_VERSION_INFO * pVersionInfo)
 
     if (pVersionInfo->wCodegenFlags & CORCOMPILE_CODEGEN_DEBUGGING)
     {
-        m_pOpt->m_compilerFlags.Set(CORJIT_FLAGS::CORJIT_FLAG_DEBUG_INFO);
         m_pOpt->m_compilerFlags.Set(CORJIT_FLAGS::CORJIT_FLAG_DEBUG_CODE);
     }
 
