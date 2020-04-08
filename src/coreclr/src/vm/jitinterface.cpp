@@ -13149,7 +13149,10 @@ BOOL TypeLayoutCheck(MethodTable * pMT, PCCOR_SIGNATURE pBlob)
 
     DWORD dwActualSize = pMT->GetNumInstanceFieldBytes();
     if (dwExpectedSize != dwActualSize)
+    {
+        _ASSERTE(!"Type layout check failed - size");
         return FALSE;
+    }
 
 #ifdef FEATURE_HFA
     if (dwFlags & READYTORUN_LAYOUT_HFA)
@@ -13159,12 +13162,18 @@ BOOL TypeLayoutCheck(MethodTable * pMT, PCCOR_SIGNATURE pBlob)
 
         DWORD dwActualHFAType = pMT->GetHFAType();
         if (dwExpectedHFAType != dwActualHFAType)
+        {
+            _ASSERTE(!"Type layout check failed - HFA");
             return FALSE;
+        }
     }
     else
     {
         if (pMT->IsHFA())
+        {
+            _ASSERTE(!"Type layout check failed - HFA2");
             return FALSE;
+        }
     }
 #else
     _ASSERTE(!(dwFlags & READYTORUN_LAYOUT_HFA));
@@ -13180,7 +13189,10 @@ BOOL TypeLayoutCheck(MethodTable * pMT, PCCOR_SIGNATURE pBlob)
 
         DWORD dwActualAlignment = CEEInfo::getClassAlignmentRequirementStatic(pMT);
         if (dwExpectedAlignment != dwActualAlignment)
+        {
+            _ASSERTE(!"Type layout check failed - alignment");
             return FALSE;
+        }
 
     }
 
@@ -13189,7 +13201,10 @@ BOOL TypeLayoutCheck(MethodTable * pMT, PCCOR_SIGNATURE pBlob)
         if (dwFlags & READYTORUN_LAYOUT_GCLayout_Empty)
         {
             if (pMT->ContainsPointers())
+            {
+                _ASSERTE(!"Type layout check failed - containspointers");
                 return FALSE;
+            }
         }
         else
         {
@@ -13201,7 +13216,10 @@ BOOL TypeLayoutCheck(MethodTable * pMT, PCCOR_SIGNATURE pBlob)
             ComputeGCRefMap(pMT, pGCRefMap, cbGCRefMap);
 
             if (memcmp(pGCRefMap, p.GetPtr(), cbGCRefMap) != 0)
+            {
+                _ASSERTE(!"Type layout check failed - GC RefMap :(");
                 return FALSE;
+            }
         }
     }
 
@@ -13668,7 +13686,10 @@ BOOL LoadDynamicInfoEntry(Module *currentModule,
             _ASSERTE(pMT->IsValueType());
 
             if (!TypeLayoutCheck(pMT, pBlob))
+            {
+                _ASSERTE(!"Type layout check failed");
                 return FALSE;
+            }
 
             result = 1;
         }
