@@ -653,9 +653,6 @@ for %%F in ("%CORE_ROOT%\System.*.dll";"%CORE_ROOT%\Microsoft.*.dll";%CORE_ROOT%
     )))))
 )
 
-echo Composite response line^: %__CompositeResponseFile%
-type "%__CompositeResponseFile%"
-
 if defined __CompositeBuildMode (
     set __CompositeCommandLine="%CORE_ROOT%\corerun"
     set __CompositeCommandLine=!__CompositeCommandLine! "%CORE_ROOT%\crossgen2\crossgen2.dll"
