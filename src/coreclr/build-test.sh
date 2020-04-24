@@ -174,19 +174,32 @@ precompile_coreroot_fx()
         for reference in "$overlayDir"/*.dll; do
             crossgen2References+=" -r:${reference}"
         done
+
+        echo "[DIAG] __DotNetCli"
+        echo "[DIAG] ${__DotNetCli} --version"
+        ${__DotNetCli} --version
+
+        echo "[DIAG] ${__DotNetCli} --info"
+        ${__DotNetCli} --info
+
+        echo "[DIAG] ${__DotNetCli} --list-sdks"
+        ${__DotNetCli} --list-sdks
+
+        echo "[DIAG] ${__DotNetCli} --list-runtimes"
+        ${__DotNetCli} --list-runtimes
     fi
 
     echo "${__MsgPrefix}Running ${compilerName} on framework assemblies in CORE_ROOT: '${CORE_ROOT}'"
 
     local totalPrecompiled=0
     local failedToPrecompile=0
-    local compositeCommandLine="$overlayDir/corerun"
-    compositeCommandLine+=" ${__BinDir}/crossgen2/crossgen2.dll"
+    local compositeCommandLine="${__DotNetCli}"
+    compositeCommandLine+=" $__BinDir/crossgen2/crossgen2.dll"
     compositeCommandLine+=" --composite"
     compositeCommandLine+=" -O"
     compositeCommandLine+=" --out:$outputDir/framework-r2r.dll"
     declare -a failedAssemblies
-
+    export COREHOST_TRACE=1
     filesToPrecompile=$(find -L "$overlayDir" -maxdepth 1 -iname Microsoft.\*.dll -o -iname System.\*.dll -o -iname netstandard.dll -o -iname mscorlib.dll -type f)
     for fileToPrecompile in ${filesToPrecompile}; do
         local filename="$fileToPrecompile"
@@ -206,7 +219,7 @@ precompile_coreroot_fx()
         fi
 
         if [[ "$__DoCrossgen2" != 0 ]]; then
-            commandLine="$overlayDir/corerun $overlayDir/crossgen2/crossgen2.dll $crossgen2References -O --inputbubble --out $outputDir/$(basename $filename) $filename"
+            commandLine="${__DotNetCli} $overlayDir/crossgen2/crossgen2.dll $crossgen2References -O --inputbubble --out $outputDir/$(basename $filename) $filename"
         fi
 
         echo Precompiling "$filename"
@@ -229,6 +242,7 @@ precompile_coreroot_fx()
 
         totalPrecompiled=$((totalPrecompiled+1))
         echo "Processed: $totalPrecompiled, failed $failedToPrecompile"
+        export COREHOST_TRACE=0
     done
 
     if [[ "$__CompositeBuildMode" != 0 ]]; then
