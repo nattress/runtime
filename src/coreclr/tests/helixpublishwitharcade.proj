@@ -36,6 +36,9 @@
       </_PropertiesToPass>
     </PropertyGroup>
 
+    <Message Text="GlobalJsonContent: $(GlobalJsonContent)" Importance="High" />
+    <Message Text="DotNetCliVersion: $(DotNetCliVersion)" Importance="High" />
+    <Message Text="DotNetCliPackageType: $(DotNetCliPackageType)" Importance="High" />
     <Error Condition="'$(_Scenarios)' == ''" Text="_Scenarios not set" />
 
     <MSBuild Projects="$(MSBuildProjectFile)" Targets="PrepareCorrelationPayloadDirectory" />
@@ -64,6 +67,14 @@
     <PayloadsRootDirectory>$(BinDir)Payloads\</PayloadsRootDirectory>
     <TestEnvFileName Condition=" '$(TargetsWindows)' == 'true' ">SetStressModes_$(Scenario).cmd</TestEnvFileName>
     <TestEnvFileName Condition=" '$(TargetsWindows)' != 'true' ">SetStressModes_$(Scenario).sh</TestEnvFileName>
+
+    <IncludeDotNetCli>true</IncludeDotNetCli>
+    <DotNetCliPackageType>runtime</DotNetCliPackageType>
+    <DotNetCliVersion>5.0.0-preview.5.20228.8</DotNetCliVersion>
+    <!--
+    <GlobalJsonContent>$([System.IO.File]::ReadAllText('$(RepoRoot)global.json'))</GlobalJsonContent>
+    <DotNetCliVersion>$([System.Text.RegularExpressions.Regex]::Match($(GlobalJsonContent), '(%3F&lt;="dotnet": ").*(%3F=")'))</DotNetCliVersion>
+    -->
   </PropertyGroup>
 
   <Import Project="testgrouping.proj" />
@@ -233,12 +244,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetsWindows)' == 'true' ">
-    <CoreRun>%CORE_ROOT%\CoreRun.exe</CoreRun>
     <XUnitRunnerDll>%CORE_ROOT%\xunit.console.dll</XUnitRunnerDll>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetsWindows)' != 'true' ">
-    <CoreRun>$CORE_ROOT/corerun</CoreRun>
     <XUnitRunnerDll>$CORE_ROOT/xunit.console.dll</XUnitRunnerDll>
   </PropertyGroup>
 
@@ -260,8 +269,8 @@
 
     <HelixWorkItem Include="@(Payloads->Metadata('PayloadGroup'))">
       <PayloadDirectory>%(PayloadDirectory)</PayloadDirectory>
-      <Command>$(CoreRun) $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs)</Command>
-      <Command Condition=" '%(TestGroup)' != '' ">$(CoreRun) $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs) -trait TestGroup=%(TestGroup)</Command>
+      <Command>dotnet $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs)</Command>
+      <Command Condition=" '%(TestGroup)' != '' ">dotnet $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs) -trait TestGroup=%(TestGroup)</Command>
       <Timeout Condition=" '$(TimeoutPerTestCollectionInMinutes)' != '' ">$([System.TimeSpan]::FromMinutes($(TimeoutPerTestCollectionInMinutes)))</Timeout>
     </HelixWorkItem>
   </ItemGroup>
