@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="R2RTracingTest.Basic.cs" />
+  </ItemGroup>
+  <Import Project="R2RTracingTest.targets" />
+</Project>
