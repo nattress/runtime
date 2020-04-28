@@ -60,11 +60,21 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             MetadataReader metadataReader = _module.MetadataReader;
             BlobReader metadataBlob = new BlobReader(_module.PEReader.GetMetadata().Pointer, _module.PEReader.GetMetadata().Length);
             metadataBlob.Offset = metadataReader.GetTableMetadataOffset(TableIndex.FieldRva);
-
+            int rowSize = metadataReader.GetTableRowSize(TableIndex.FieldRva);
+            Debug.Assert(rowSize == 6 || rowSize == 8);
+            
             for (int i = 1; i <= metadataReader.GetTableRowCount(TableIndex.FieldRva); i++)
             {
                 int currentFieldRva = metadataBlob.ReadInt32();
-                short currentFieldRid = metadataBlob.ReadInt16();
+                int currentFieldRid;
+                if (rowSize == 8)
+                {
+                    currentFieldRid = metadataBlob.ReadInt32();
+                }
+                else
+                {
+                    currentFieldRid = metadataBlob.ReadInt16();
+                }
                 if (currentFieldRva != _rva)
                     continue;
 
