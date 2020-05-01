@@ -78,7 +78,7 @@
 
     <IncludeDotNetCli>true</IncludeDotNetCli>
     <DotNetCliPackageType>runtime</DotNetCliPackageType>
-    <DotNetCliVersion>5.0.0-preview.5.20228.8</DotNetCliVersion>
+    <DotNetCliVersion>5.0.0-preview.4.20221.7</DotNetCliVersion>
     <DotNetCliRuntime>$(HelixRuntimeRid)</DotNetCliRuntime>
   </PropertyGroup>
 
