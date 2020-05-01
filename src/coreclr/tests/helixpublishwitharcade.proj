@@ -39,6 +39,7 @@
     <Message Text="GlobalJsonContent: $(GlobalJsonContent)" Importance="High" />
     <Message Text="DotNetCliVersion: $(DotNetCliVersion)" Importance="High" />
     <Message Text="DotNetCliPackageType: $(DotNetCliPackageType)" Importance="High" />
+    <Message Text="HelixRuntimeRid: $(HelixRuntimeRid)" Importance="High" />
     <Error Condition="'$(_Scenarios)' == ''" Text="_Scenarios not set" />
 
     <MSBuild Projects="$(MSBuildProjectFile)" Targets="PrepareCorrelationPayloadDirectory" />
@@ -61,6 +62,13 @@
     <MSBuild Projects="@(_ProjectsToBuild)" Targets="Test" BuildInParallel="$(_BuildInParallel)" StopOnFirstFailure="false" Properties="UsesHelixSdk=true" />
   </Target>
 
+  <!-- Choose a suitable runtime RID for Helix to restore the dotnet cli -->
+  <PropertyGroup>
+    <HelixRuntimeRid Condition="'$(TargetOS)' == 'Windows_NT'">win-$(TargetArchitecture)</HelixRuntimeRid>
+    <HelixRuntimeRid Condition="'$(TargetOS)' == 'OSX'">osx-$(TargetArchitecture)</HelixRuntimeRid>
+    <HelixRuntimeRid Condition="'$(TargetOS)' == 'Linux' or '$(TargetOS)' == 'Linux_musl'">linux-$(TargetArchitecture)</HelixRuntimeRid>
+  </PropertyGroup>
+
   <PropertyGroup>
     <BinDir>$([MSBuild]::NormalizeDirectory($(TestWorkingDir)))</BinDir>
     <CoreRootDirectory>$(BinDir)Tests\Core_Root\</CoreRootDirectory>
@@ -71,11 +79,7 @@
     <IncludeDotNetCli>true</IncludeDotNetCli>
     <DotNetCliPackageType>runtime</DotNetCliPackageType>
     <DotNetCliVersion>5.0.0-preview.5.20228.8</DotNetCliVersion>
-    <DotNetCliRuntime>$(TargetRid)</DotNetCliRuntime>
-    <!--
-    <GlobalJsonContent>$([System.IO.File]::ReadAllText('$(RepoRoot)global.json'))</GlobalJsonContent>
-    <DotNetCliVersion>$([System.Text.RegularExpressions.Regex]::Match($(GlobalJsonContent), '(%3F&lt;="dotnet": ").*(%3F=")'))</DotNetCliVersion>
-    -->
+    <DotNetCliRuntime>$(HelixRuntimeRid)</DotNetCliRuntime>
   </PropertyGroup>
 
   <Import Project="testgrouping.proj" />
