@@ -687,7 +687,7 @@ if /i "%__BuildArch%" == "arm64" ( set __CrossgenExe="%__BinDir%\x64\crossgen.ex
 set __CrossgenExe=%__CrossgenExe%
 
 if defined __DoCrossgen2 (
-    set __CrossgenExe="%__BinDir%\dotnet.cmd" "%CORE_ROOT%\crossgen2\crossgen2.dll"
+    set __CrossgenExe="%__RepoRootDir%\dotnet.cmd" "%CORE_ROOT%\crossgen2\crossgen2.dll"
 )
 
 REM Intentionally avoid using the .dll extension to prevent
