@@ -33,7 +33,7 @@
         RunInUnloadableContext=$(_RunInUnloadableContext);
         TimeoutPerTestCollectionInMinutes=$(_TimeoutPerTestCollectionInMinutes);
         TimeoutPerTestInMinutes=$(_TimeoutPerTestInMinutes);
-        RuntimeMode=$(_RuntimeMode)
+        RuntimeMode=$(_RuntimeMode);
         BundledNETCoreAppPackageVersion=$(BundledNETCoreAppPackageVersion)
       </_PropertiesToPass>
     </PropertyGroup>
