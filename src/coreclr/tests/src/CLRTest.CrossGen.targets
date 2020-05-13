@@ -185,7 +185,7 @@ if defined RunCrossGen2 (
     set __Command=!_DebuggerFullPath!
     REM Tests run locally need __TestDotNetCmd (set by runtest.py) or a compatible 5.0 dotnet runtime in the path
     if defined __TestDotNetCmd (
-        set __Command=!__Command! "call !__TestDotNetCmd!"
+        set __Command=!__Command! "!__TestDotNetCmd!"
     ) else (
         set __Command=!__Command! "dotnet"
     )
