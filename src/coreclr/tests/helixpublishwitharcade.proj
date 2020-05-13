@@ -34,6 +34,7 @@
         TimeoutPerTestCollectionInMinutes=$(_TimeoutPerTestCollectionInMinutes);
         TimeoutPerTestInMinutes=$(_TimeoutPerTestInMinutes);
         RuntimeMode=$(_RuntimeMode)
+        BundledNETCoreAppPackageVersion=$(BundledNETCoreAppPackageVersion)
       </_PropertiesToPass>
     </PropertyGroup>
 
@@ -277,7 +278,7 @@
 
     <HelixWorkItem Include="@(Payloads->Metadata('PayloadGroup'))">
       <PayloadDirectory>%(PayloadDirectory)</PayloadDirectory>
-      <Command>dotnet $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs)</Command>
+      <Command>dotnet --fx-version $(BundledNETCoreAppPackageVersion) $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs)</Command>
       <Command Condition=" '%(TestGroup)' != '' ">dotnet $(XUnitRunnerDll) %(XUnitWrapperDlls) $(XUnitRunnerArgs) -trait TestGroup=%(TestGroup)</Command>
       <Timeout Condition=" '$(TimeoutPerTestCollectionInMinutes)' != '' ">$([System.TimeSpan]::FromMinutes($(TimeoutPerTestCollectionInMinutes)))</Timeout>
     </HelixWorkItem>
