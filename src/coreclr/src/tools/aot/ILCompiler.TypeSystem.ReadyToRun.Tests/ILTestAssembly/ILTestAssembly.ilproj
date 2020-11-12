@@ -6,6 +6,7 @@
     <SkipTestRun>true</SkipTestRun>
     <TargetFramework>netstandard2.0</TargetFramework>
     <EnableDefaultItems>false</EnableDefaultItems>
+    <Configurations>Debug;Release;Checked</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

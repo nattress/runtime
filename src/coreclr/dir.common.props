@@ -24,6 +24,8 @@
     <Platform Condition="'$(Platform)' == ''">$(TargetArchitecture)</Platform>
 
     <PlatformConfigPathPart>$(TargetOS).$(TargetArchitecture).$(Configuration)</PlatformConfigPathPart>
+
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
   </PropertyGroup>
 
   <!-- Common properties -->
